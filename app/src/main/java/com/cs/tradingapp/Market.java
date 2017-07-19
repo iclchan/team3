@@ -1,4 +1,4 @@
-package main.java.com.cs.tradingapp;
+package com.cs.tradingapp;
 
 import java.util.HashMap;
 import java.util.List;

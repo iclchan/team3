@@ -1,4 +1,4 @@
-package main.java.com.cs.tradingapp;
+package com.cs.tradingapp;
 
 public class Order {
     private String symbol;

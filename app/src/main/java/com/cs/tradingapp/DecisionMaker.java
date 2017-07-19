@@ -1,4 +1,4 @@
-package main.java.com.cs.tradingapp;
+package com.cs.tradingapp;
 
 import net.minidev.json.JSONObject;
 
@@ -19,21 +19,23 @@ public class DecisionMaker {
     private static final double AVG_SMOOTHING_CONSTANT = 0.7;
     private static final double TREND_SMOOTHING_CONSTANT = 0.3;
     private Team team;
-
+            
     public Runnable getDecision(List<Instrument> instruments) {
         Runnable decisionMakerRunnable = () -> {
             period_t++;
             if ( tradeFreeze ) updateTradeFreeze(System.currentTimeMillis());
             List<JSONObject> tradingActions = new ArrayList<>();
-            team = TradingAppUtil.getTeamInfo();
+            TradingAppUtil tradingAppUtil = new TradingAppUtil();
+            OrderUtil orderUtil = new OrderUtil();
+            team = tradingAppUtil.getTeamInfo();
             instruments.parallelStream().forEach(instrument -> {
                 tradingActions.add(getAction(instrument));
             });
             //TODO for each recommendation, fire request! (JSON)
             for(JSONObject jsonParam: tradingActions){
                 if(jsonParam != null){
-                    String response = TradingAppUtil.executeLimitOrder(jsonParam);
-                    OrderUtil.addPendingOrder(response);
+                    String response = tradingAppUtil.executeLimitOrder(jsonParam);
+                    orderUtil.addPendingOrder(response);
                 }
             }
         };
@@ -75,7 +77,7 @@ public class DecisionMaker {
             case 1:
                 result = new HashMap<>();
                 result.put("side", position > 0 ? "buy" : "sell");
-                result.put("price", "" + buyWA); // buy at current price
+                result.put("price", position > 0 ? "" + buyWA : "" + sellWA ); // buy at current price
                 result.put("qty", getStaggeredQuantity(symbol)); // TODO remove magic number!
                 break;
             case 0:

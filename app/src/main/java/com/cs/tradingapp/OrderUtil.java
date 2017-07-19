@@ -1,4 +1,4 @@
-package main.java.com.cs.tradingapp;
+package com.cs.tradingapp;
 
 import com.jayway.jsonpath.JsonPath;
 import java.util.ArrayList;
@@ -10,8 +10,9 @@ public class OrderUtil {
 
     private static HashMap<String, List<double[]>> history = new HashMap<>();
     private static List<Order> pendingOrders = new ArrayList<>();
+    private TradingAppUtil tradingAppUtil = new TradingAppUtil();
 
-    public static void addPendingOrder(String response) {
+    public void addPendingOrder(String response) {
         String symbol = JsonPath.read(response, "$.symbol");
         String orderId = JsonPath.read(response, "$.id");
         double qty = (int) JsonPath.read(response, "$.qty");
@@ -20,7 +21,7 @@ public class OrderUtil {
         pendingOrders.add(new Order(symbol, orderId, qty, filledQty, price));
     }
 
-    public static void checkPendingOrders() {
+    public void checkPendingOrders() {
         if (!pendingOrders.isEmpty()) {
             Iterator<Order> orderIter = pendingOrders.iterator();
             while (orderIter.hasNext()) {
@@ -29,7 +30,7 @@ public class OrderUtil {
                 
                 boolean filled = false;
                 if(order != null){
-                    filled = TradingAppUtil.checkLimitOrder(orderId);
+                    filled = tradingAppUtil.checkLimitOrder(orderId);
                 }
                 
                 if (filled) {
@@ -39,13 +40,14 @@ public class OrderUtil {
                     }
                     orderHistory.add(new double[]{order.getPrice(), order.getQty()});
                     history.put(orderId, orderHistory);
-                    orderIter.remove();
+                    
                 }
+                orderIter.remove();
             }
         }
     }
 
-    public static HashMap<String, List<double[]>> getHistory() {
+    public HashMap<String, List<double[]>> getHistory() {
         return history;
     }
 }

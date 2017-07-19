@@ -1,4 +1,4 @@
-package main.java.com.cs.tradingapp;
+package com.cs.tradingapp;
 
 import com.jayway.jsonpath.JsonPath;
 import java.io.BufferedReader;
@@ -20,7 +20,7 @@ public class TradingAppUtil {
 //        String marketData = getMarketData();
 //        List<String> symbols = JsonPath.read(marketData, "$..symbol");
         List<String> symbols = Arrays.asList("0001", "0005", "0386", "0388", "3988");
-        HashMap<String, Instrument> instruments = new HashMap<>();
+        HashMap<String,Instrument> instruments = new HashMap<>();
         symbols.parallelStream().forEach(symbol -> {
             String instrumentJson = getInstrumentInfo(symbol);
             HashMap<String, Integer> buyMap = JsonPath.read(instrumentJson, "$.buy");
@@ -31,7 +31,7 @@ public class TradingAppUtil {
         return new Market(instruments);
     }
     
-    public static Team getTeamInfo(){
+    public Team getTeamInfo(){
         String teamInfo = "";
         Team team = null;
         try {
@@ -87,19 +87,19 @@ public class TradingAppUtil {
         return team;
     }
     
-    public static String executeLimitOrder(JSONObject jsonParam){
+    public String executeLimitOrder(JSONObject jsonParam){
         jsonParam.put("team_uid", "tOqZFjL4DLle_Kyaotpttg");
         jsonParam.put("order_type", "limit");
         return executeOrder(jsonParam);
     }
     
-    public static String executeMarketOrder(JSONObject jsonParam){
+    public String executeMarketOrder(JSONObject jsonParam){
         jsonParam.put("team_uid", "tOqZFjL4DLle_Kyaotpttg");
         jsonParam.put("order_type", "market");
         return executeOrder(jsonParam);
     }
     
-    public static boolean checkLimitOrder(String orderId){
+    public boolean checkLimitOrder(String orderId){
         String response = "";
         try {
             URL url = new URL("https://cis2017-exchange.herokuapp.com/api/orders/" + orderId);
@@ -137,7 +137,7 @@ public class TradingAppUtil {
         return false;
     }
     
-    public static String cancelLimitOrder(String orderId){
+    private String cancelLimitOrder(String orderId){
         String response = "";
         try {
             URL url = new URL("https://cis2017-exchange.herokuapp.com/api/orders/" + orderId);
@@ -225,7 +225,7 @@ public class TradingAppUtil {
         return instrumentInfo;
     }
     
-    private static String executeOrder(JSONObject jsonParam){
+    private String executeOrder(JSONObject jsonParam){
         String response = "";
         System.out.println("--------------- Executing Orders ---------------");
         System.out.println(jsonParam.toString());
