@@ -27,22 +27,27 @@ public class OrderUtil {
             while (orderIter.hasNext()) {
                 Order order = orderIter.next();
                 String orderId = order.getOrderId();
-                
-                boolean filled = false;
-                if(order != null){
-                    filled = tradingAppUtil.checkLimitOrder(orderId);
+
+                int filled = -2;
+                filled = tradingAppUtil.checkLimitOrder(orderId);
+                switch (filled) {
+                    case -1:
+                        orderIter.remove();
+                        break;
+                    case 0:
+                        List<double[]> orderHistory = history.get(orderId);
+                        if (orderHistory == null) {
+                            orderHistory = new ArrayList<double[]>();
+                        }
+                        orderHistory.add(new double[]{order.getPrice(), order.getQty()});
+                        history.put(orderId, orderHistory);
+                        orderIter.remove();
+                        break;
+                    case 1:
+                        break;
+                    default:
+                        System.out.println("No order checked");
                 }
-                
-                if (filled) {
-                    List<double[]> orderHistory = history.get(orderId);
-                    if (orderHistory == null) {
-                        orderHistory = new ArrayList<double[]>();
-                    }
-                    orderHistory.add(new double[]{order.getPrice(), order.getQty()});
-                    history.put(orderId, orderHistory);
-                    
-                }
-                orderIter.remove();
             }
         }
     }
