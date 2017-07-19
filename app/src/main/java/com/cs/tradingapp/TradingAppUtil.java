@@ -99,7 +99,7 @@ public class TradingAppUtil {
         return executeOrder(jsonParam);
     }
     
-    public boolean checkLimitOrder(String orderId){
+    public int checkLimitOrder(String orderId){
         String response = "";
         try {
             URL url = new URL("https://cis2017-exchange.herokuapp.com/api/orders/" + orderId);
@@ -130,11 +130,15 @@ public class TradingAppUtil {
             double qty = (int) JsonPath.read(response, "$.qty");
             double filledQty = (int) JsonPath.read(response, "$.filled_qty");
             if(filledQty == qty){
+                return 0;
+            }else if (filledQty == 0){
                 cancelLimitOrder(orderId);
-                return true;
+                return -1;
+            }else{
+                return 1;
             }
         }
-        return false;
+        return -2;
     }
     
     private String cancelLimitOrder(String orderId){

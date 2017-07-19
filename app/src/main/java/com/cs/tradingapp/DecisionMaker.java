@@ -97,7 +97,7 @@ public class DecisionMaker {
 
         double percentageChangeBuy = trendBuy/estimatedPriceBuy;
         double percentageChangeSell = trendSell/estimatedPriceSell;
-
+        
         return "100";
     }
 
