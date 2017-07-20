@@ -130,7 +130,7 @@ public class DecisionMaker {
             double currentExposure = (currentQuantity * price / SEED_MONEY);
             double exposureLimiter = SELL_EXPOSURE_MODIFIER * ( 1 - currentExposure );
             double riskAdversity = SELL_RISK_MODIFIER * ( 1 - percentageChangeSell );
-            double probability = ( ( 1 - SELL_EXPOSURE_RISK_RATIO) * (exposureLimiter) ) + ( (SELL_EXPOSURE_RISK_RATIO) * riskAdversity );
+            double probability = Math.max(0, Math.min(1, ( ( 1 - SELL_EXPOSURE_RISK_RATIO) * (exposureLimiter) ) + ( (SELL_EXPOSURE_RISK_RATIO) * riskAdversity )));
             double suggestedSellQuantity = SELL_CURVE.inverseCumulativeProbability(probability);
             List<double[]> history = orderUtil.getInstrumentHistory(symbol);
             double profitableQuantity = 0;
@@ -169,7 +169,7 @@ public class DecisionMaker {
             double currentExposure = (currentQuantity * price / SEED_MONEY);
             double exposureLimiter = BUY_EXPOSURE_MODIFIER * ( 1 - currentExposure );
             double riskAdversity = BUY_RISK_MODIFIER * ( 1 - percentageChangeBuy );
-            double probability = ( ( 1 - BUY_EXPOSURE_RISK_RATIO) * (exposureLimiter) ) + ( (BUY_EXPOSURE_RISK_RATIO) * riskAdversity );
+            double probability = Math.max(0, Math.min(1, ( ( 1 - BUY_EXPOSURE_RISK_RATIO) * (exposureLimiter) ) + ( (BUY_EXPOSURE_RISK_RATIO) * riskAdversity )));
             int maxQuantity = (int) Math.min((team.getCash() / price), ( MAX_INSTRUMENT_HOLDINGS / price ) - currentQuantity);
             // TODO remove this before competition
 //            System.out.println("-----DECISION MAKER-----");
