@@ -124,7 +124,6 @@ public class TradingAppUtil {
 
             if (!response.isEmpty()) {
                 if (response.equals("null")) {
-                    System.out.println("null");
                     return -1;
                 } else {
                     String status = JsonPath.read(response, "$.status");
@@ -241,7 +240,6 @@ public class TradingAppUtil {
 
     private String executeOrder(JSONObject jsonParam) {
         String response = "";
-        System.out.println(jsonParam);
         try {
             URL url = new URL("https://cis2017-exchange.herokuapp.com/api/orders");
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -283,7 +281,9 @@ public class TradingAppUtil {
                     String side = JsonPath.read(response, "$.side");
                     int qty = JsonPath.read(response, "$.qty");
                     double price = JsonPath.read(response, "$.price");
+                    String status = JsonPath.read(response, "$.status");
                     System.out.println("Order Id: " + orderId);
+                    System.out.println("Status: " + status);
                     System.out.println("Side: " + side);
                     System.out.println("Quantity: " + qty);
                     System.out.println("Price: " + price);

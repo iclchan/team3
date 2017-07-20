@@ -170,7 +170,7 @@ public class DecisionMaker {
             double exposureLimiter = BUY_EXPOSURE_MODIFIER * ( 1 - currentExposure );
             double riskAdversity = BUY_RISK_MODIFIER * ( 1 - percentageChangeBuy );
             double probability = ( ( 1 - BUY_EXPOSURE_RISK_RATIO) * (exposureLimiter) ) + ( (BUY_EXPOSURE_RISK_RATIO) * riskAdversity );
-            int maxQuantity = (int) Math.min((team.getCash() / price), MAX_INSTRUMENT_HOLDINGS / price);
+            int maxQuantity = (int) Math.min((team.getCash() / price), ( MAX_INSTRUMENT_HOLDINGS / price ) - currentQuantity);
             // TODO remove this before competition
 //            System.out.println("-----DECISION MAKER-----");
 //            System.out.println("currentExposure " + currentExposure);
