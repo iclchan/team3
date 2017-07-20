@@ -34,7 +34,9 @@ public class DecisionMaker {
             //TODO for each recommendation, fire request! (JSON)
             for(JSONObject jsonParam: tradingActions){
                 if(jsonParam != null){
+                    System.out.println("----------------------------------------------");
                     String response = tradingAppUtil.executeLimitOrder(jsonParam);
+                    System.out.println("----------------------------------------------");
                     orderUtil.addPendingOrder(response);
                 }
             }

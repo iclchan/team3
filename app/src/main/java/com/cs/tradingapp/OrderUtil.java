@@ -13,23 +13,29 @@ public class OrderUtil {
     private TradingAppUtil tradingAppUtil = new TradingAppUtil();
 
     public void addPendingOrder(String response) {
-        String symbol = JsonPath.read(response, "$.symbol");
-        String orderId = JsonPath.read(response, "$.id");
-        double qty = (int) JsonPath.read(response, "$.qty");
-        double filledQty = (int) JsonPath.read(response, "$.filled_qty");
-        double price = JsonPath.read(response, "$.price");
-        pendingOrders.add(new Order(symbol, orderId, qty, filledQty, price));
+        if (response != null && !response.isEmpty()) {
+            String symbol = JsonPath.read(response, "$.symbol");
+            String orderId = JsonPath.read(response, "$.id");
+            double qty = (int) JsonPath.read(response, "$.qty");
+            double filledQty = (int) JsonPath.read(response, "$.filled_qty");
+            double price = JsonPath.read(response, "$.price");
+            pendingOrders.add(new Order(symbol, orderId, qty, filledQty, price));
+        }
     }
 
     public void checkPendingOrders() {
         if (!pendingOrders.isEmpty()) {
+            System.out.println("Scanning limit orders...");
+            System.out.println("----------------------------------------------");
             Iterator<Order> orderIter = pendingOrders.iterator();
             while (orderIter.hasNext()) {
                 Order order = orderIter.next();
                 String orderId = order.getOrderId();
 
                 int filled = -2;
+                System.out.println(orderId);
                 filled = tradingAppUtil.checkLimitOrder(orderId);
+                
                 switch (filled) {
                     case -1:
                         orderIter.remove();
@@ -49,6 +55,8 @@ public class OrderUtil {
                         System.out.println("No order checked");
                 }
             }
+            System.out.println("----------------------------------------------");
+            System.out.println("Scanning limit orders done!");
         }
     }
 
