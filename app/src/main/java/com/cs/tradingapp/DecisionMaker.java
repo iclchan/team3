@@ -24,7 +24,12 @@ public class DecisionMaker {
     private static final double BUY_EXPOSURE_MODIFIER = 1.0; // 0.0 to 1.0
     private static final double BUY_RISK_MODIFIER = 1.0; // 0.0 to 1.0
     private static final double BUY_EXPOSURE_RISK_RATIO = 0.5; // favor exposure <=> 0.5 <=> favor risk
-    private static NormalDistribution BUY_CURVE = new NormalDistribution(BUY_LIMIT/2, BUY_LIMIT/3);
+    private static NormalDistribution BUY_CURVE = new NormalDistribution(BUY_LIMIT/2, BUY_LIMIT/4);
+    private static final double SELL_LIMIT = 1000;
+    private static final double SELL_EXPOSURE_MODIFIER = 1.0; // 0.0 to 1.0
+    private static final double SELL_RISK_MODIFIER = 1.0; // 0.0 to 1.0
+    private static final double SELL_EXPOSURE_RISK_RATIO = 0.5; // favor exposure <=> 0.5 <=> favor risk
+    private static NormalDistribution SELL_CURVE = new NormalDistribution(SELL_LIMIT/2, SELL_LIMIT/4);
     private Team team;
             
     public Runnable getDecision(List<Instrument> instruments) {
@@ -82,23 +87,23 @@ public class DecisionMaker {
         int position = getPosition(symbol); // negative is sell, positive is buy;
         double currentQuantity = team.getInstrumentQty(symbol);
         double staggeredQuantity;
+//        System.out.println("-----REC-----");
+//        System.out.println("buyWA: " + buyWA);
+//        System.out.println("sellWA: " + sellWA);
+//        System.out.println("estimatedPriceBuy_A: " + estimatedPriceBuy_A.get(symbol) );
+//        System.out.println("trendBuy_T: " + trendBuy_T.get(symbol) );
+//        System.out.println("estimatedPriceSell_A: " + estimatedPriceBuy_A.get(symbol) );
+//        System.out.println("trendSell_T: " + trendSell_T.get(symbol) );
+//        System.out.println("-----REC-----\n");
         switch(position) {
             case -1:
-                staggeredQuantity = getStaggeredQuantity(symbol, position, currentQuantity, buyWA);
+                staggeredQuantity = getSellStaggeredQuantity(symbol, currentQuantity, buyWA);
                 if (staggeredQuantity > 0.0) {
                     result = generateRecommendationResult("sell", sellWA, staggeredQuantity);
                 }
                 break;
             case 1:
-                System.out.println("-----REC-----");
-                System.out.println("buyWA: " + buyWA);
-                System.out.println("sellWA: " + sellWA);
-                System.out.println("estimatedPriceBuy_A: " + estimatedPriceBuy_A.get(symbol) );
-                System.out.println("trendBuy_T: " + trendBuy_T.get(symbol) );
-                System.out.println("estimatedPriceSell_A: " + estimatedPriceBuy_A.get(symbol) );
-                System.out.println("trendSell_T: " + trendSell_T.get(symbol) );
-                System.out.println("-----REC-----\n");
-                staggeredQuantity = getStaggeredQuantity(symbol, position, currentQuantity, sellWA);
+                staggeredQuantity = getBuyStaggeredQuantity(symbol, currentQuantity, sellWA);
                 if (staggeredQuantity > 0.0) {
                     result = generateRecommendationResult("buy", buyWA, staggeredQuantity);
                 }
@@ -120,42 +125,58 @@ public class DecisionMaker {
         return result;
     }
 
-    private double getStaggeredQuantity(String symbol, int position, double currentQuantity, double price) {
-        double quantity = 100.0;
-        if (position == 0) quantity = 0;
-        else if (position > 0) { // BUYBUYBUY
-            double estimatedPriceBuy = estimatedPriceBuy_A.get(symbol);
-            double trendBuy = trendBuy_T.get(symbol);
-            double percentageChangeBuy = trendBuy / estimatedPriceBuy;
-            if (currentQuantity == 0) {
-                quantity = BUY_LIMIT;
-            } else {
-                double currentExposure = (currentQuantity * price / SEED_MONEY);
-                double exposureLimiter = BUY_EXPOSURE_MODIFIER * ( 1 - currentExposure );
-                double riskAdversity = BUY_RISK_MODIFIER * ( 1 - percentageChangeBuy );
-                double probability = ( ( 1 - BUY_EXPOSURE_RISK_RATIO) * (exposureLimiter) ) + ( (BUY_EXPOSURE_RISK_RATIO) * riskAdversity );
-                quantity = BUY_CURVE.inverseCumulativeProbability(probability);
-                // TODO remove this before competition
-                // TODO check current cash, can we even buy this amount?
-                System.out.println("-----DECISION MAKER-----");
-                System.out.println("currentExposure " + currentExposure);
-                System.out.println("percentageChangeBuy " + percentageChangeBuy);
-                System.out.println("------------------------");
-                System.out.println("exposureLimiter: " + exposureLimiter);
-                System.out.println("riskAdversity: " + riskAdversity);
-                System.out.println("probability: " + probability);
-                System.out.println("quantity: " + quantity);
-                System.out.println("-----DECISION MAKER-----");
-            }
-        } else if (position < 0) { // SELLSELLSELL
-            if ( currentQuantity == 0) quantity = 0.0;
-            else {
-                double estimatedPriceSell = estimatedPriceSell_A.get(symbol);
-                double trendSell = trendSell_T.get(symbol);
-                double percentageChangeSell = trendSell/estimatedPriceSell;
-            }
+    private double getSellStaggeredQuantity(String symbol, double currentQuantity, double price) {
+        double estimatedPriceSell = estimatedPriceSell_A.get(symbol);
+        double trendSell = trendSell_T.get(symbol);
+        double percentageChangeSell = trendSell / estimatedPriceSell;
+        if (currentQuantity == 0) {
+            return SELL_LIMIT;
+        } else {
+            double currentExposure = (currentQuantity * price / SEED_MONEY);
+            double exposureLimiter = SELL_EXPOSURE_MODIFIER * ( 1 - currentExposure );
+            double riskAdversity = SELL_RISK_MODIFIER * ( 1 - percentageChangeSell );
+            double probability = ( ( 1 - SELL_EXPOSURE_RISK_RATIO) * (exposureLimiter) ) + ( (SELL_EXPOSURE_RISK_RATIO) * riskAdversity );
+            int maxQuantity = (int) team.getInstrumentQty(symbol);
+            return Math.min(SELL_CURVE.inverseCumulativeProbability(probability), maxQuantity);
+            // TODO remove this before competition
+//            System.out.println("-----DECISION MAKER-----");
+//            System.out.println("currentExposure " + currentExposure);
+//            System.out.println("percentageChangeBuy " + percentageChangeBuy);
+//            System.out.println("------------------------");
+//            System.out.println("exposureLimiter: " + exposureLimiter);
+//            System.out.println("riskAdversity: " + riskAdversity);
+//            System.out.println("probability: " + probability);
+//            System.out.println("quantity: " + quantity);
+//            System.out.println("-----DECISION MAKER-----");
+//            return quantity;
         }
-        return quantity;
+    }
+
+    private double getBuyStaggeredQuantity(String symbol, double currentQuantity, double price) {
+        double estimatedPriceBuy = estimatedPriceBuy_A.get(symbol);
+        double trendBuy = trendBuy_T.get(symbol);
+        double percentageChangeBuy = trendBuy / estimatedPriceBuy;
+        if (currentQuantity == 0) {
+            return BUY_LIMIT;
+        } else {
+            double currentExposure = (currentQuantity * price / SEED_MONEY);
+            double exposureLimiter = BUY_EXPOSURE_MODIFIER * ( 1 - currentExposure );
+            double riskAdversity = BUY_RISK_MODIFIER * ( 1 - percentageChangeBuy );
+            double probability = ( ( 1 - BUY_EXPOSURE_RISK_RATIO) * (exposureLimiter) ) + ( (BUY_EXPOSURE_RISK_RATIO) * riskAdversity );
+            int maxQuantity = (int) (team.getCash() / price);
+            return Math.min(BUY_CURVE.inverseCumulativeProbability(probability), maxQuantity);
+            // TODO remove this before competition
+//            System.out.println("-----DECISION MAKER-----");
+//            System.out.println("currentExposure " + currentExposure);
+//            System.out.println("percentageChangeBuy " + percentageChangeBuy);
+//            System.out.println("------------------------");
+//            System.out.println("exposureLimiter: " + exposureLimiter);
+//            System.out.println("riskAdversity: " + riskAdversity);
+//            System.out.println("probability: " + probability);
+//            System.out.println("quantity: " + quantity);
+//            System.out.println("-----DECISION MAKER-----");
+//            return quantity;
+        }
     }
 
     private int getPosition(String symbol) {
