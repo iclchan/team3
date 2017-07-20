@@ -41,23 +41,22 @@ public class TradingAppUtil {
             conn.setRequestProperty("Accept", "application/json");
             
             if (conn.getResponseCode() != 200) {
-                throw new RuntimeException("Failed : HTTP error code : "
-                        + conn.getResponseCode());
-            }
+                System.out.println("Failed : HTTP error code : " + conn.getResponseCode());
+            }else{
+                BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
 
-            BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-
-            String teamInfoLine;
-            while ((teamInfoLine = br.readLine()) != null) {
-                teamInfo += teamInfoLine;
+                String teamInfoLine;
+                while ((teamInfoLine = br.readLine()) != null) {
+                    teamInfo += teamInfoLine;
+                }
             }
+            
             conn.disconnect();
-        } catch (MalformedURLException e) {
+            
+        } catch (Exception e) {
             e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+        } 
+        
         if(!teamInfo.isEmpty()){
             String uid = JsonPath.read(teamInfo, "$.uid");
             double cash = Double.parseDouble(JsonPath.read(teamInfo, "$.cash"));
@@ -108,24 +107,22 @@ public class TradingAppUtil {
             conn.setRequestProperty("Accept", "application/json");
             
             if (conn.getResponseCode() != 200) {
-                throw new RuntimeException("Failed : HTTP error code : "
-                        + conn.getResponseCode());
+                System.out.println("Failed : HTTP error code : " + conn.getResponseCode());
+            }else{
+                BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+                String responseLine;
+                while ((responseLine = br.readLine()) != null) {
+                    System.out.println("Checking order: " + responseLine);
+                    response += responseLine;
+                }
             }
-
-            BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-            String responseLine;
-            while ((responseLine = br.readLine()) != null) {
-                System.out.println("Checking order: " + responseLine);
-                response += responseLine;
-            }
+            
             conn.disconnect();
-
-        } catch (MalformedURLException e) {
+            
+        } catch (Exception e) {
             e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        
+        } 
+                
         if(!response.isEmpty()){
             double qty = (int) JsonPath.read(response, "$.qty");
             double filledQty = (int) JsonPath.read(response, "$.filled_qty");
@@ -150,22 +147,20 @@ public class TradingAppUtil {
             conn.setRequestProperty("Accept", "application/json");
             
             if (conn.getResponseCode() != 200) {
-                throw new RuntimeException("Failed : HTTP error code : "
-                        + conn.getResponseCode());
-            }
-
-            BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-            String responseLine;
-            while ((responseLine = br.readLine()) != null) {
-                response += responseLine;
+                System.out.println("Failed : HTTP error code : " + conn.getResponseCode());
+            }else{
+                BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+                String responseLine;
+                while ((responseLine = br.readLine()) != null) {
+                    response += responseLine;
+                }
             }
             conn.disconnect();
 
-        } catch (MalformedURLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        } 
+        
         return response;
     }
       
@@ -178,24 +173,21 @@ public class TradingAppUtil {
             conn.setRequestProperty("Accept", "application/json");
 
             if (conn.getResponseCode() != 200) {
-                throw new RuntimeException("Failed : HTTP error code : "
-                        + conn.getResponseCode());
-            }
+                System.out.println("Failed : HTTP error code : " + conn.getResponseCode());
+            }else{
+                BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
 
-            BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-
-            String marketDataLine;
-            while ((marketDataLine = br.readLine()) != null) {
-                marketData += marketDataLine;
+                String marketDataLine;
+                while ((marketDataLine = br.readLine()) != null) {
+                    marketData += marketDataLine;
+                }
             }
             conn.disconnect();
 
-        } catch (MalformedURLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+        } 
+        
         return marketData;
     }
     
@@ -208,24 +200,22 @@ public class TradingAppUtil {
             conn.setRequestProperty("Accept", "application/json");
             
             if (conn.getResponseCode() != 200) {
-                throw new RuntimeException("Failed : HTTP error code : "
-                        + conn.getResponseCode());
-            }
+                System.out.println("Failed : HTTP error code : " + conn.getResponseCode());
+            }else{
+                BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
 
-            BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-
-            String instrumentInfoLine;
-            while ((instrumentInfoLine = br.readLine()) != null) {
-                instrumentInfo += instrumentInfoLine;
+                String instrumentInfoLine;
+                while ((instrumentInfoLine = br.readLine()) != null) {
+                    instrumentInfo += instrumentInfoLine;
+                }
             }
+            
             conn.disconnect();
 
-        } catch (MalformedURLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+        } 
+        
         return instrumentInfo;
     }
     
@@ -244,23 +234,22 @@ public class TradingAppUtil {
             }
             
             if (conn.getResponseCode() != 200) {
-                throw new RuntimeException("Failed : HTTP error code : "
-                        + conn.getResponseCode());
+                System.out.println("Failed : HTTP error code : " + conn.getResponseCode());
+            }else{
+                BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream()))); 
+                String responseLine;
+                while ((responseLine = br.readLine()) != null) {
+                    System.out.println("Executing order: " + responseLine);
+                    response += responseLine;
+                }
             }
             
-            BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream()))); 
-            String responseLine;
-            while ((responseLine = br.readLine()) != null) {
-                System.out.println("Executing order: " + responseLine);
-                response += responseLine;
-            }
             conn.disconnect();
 
-        } catch (MalformedURLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        } 
+        
         return response;
     }
 }
