@@ -89,14 +89,6 @@ public class DecisionMaker {
         int position = getPosition(symbol); // negative is sell, positive is buy;
         double currentQuantity = team.getInstrumentQty(symbol);
         double staggeredQuantity;
-//        System.out.println("-----REC-----");
-//        System.out.println("buyWA: " + buyWA);
-//        System.out.println("sellWA: " + sellWA);
-//        System.out.println("estimatedPriceBuy_A: " + estimatedPriceBuy_A.get(symbol) );
-//        System.out.println("trendBuy_T: " + trendBuy_T.get(symbol) );
-//        System.out.println("estimatedPriceSell_A: " + estimatedPriceBuy_A.get(symbol) );
-//        System.out.println("trendSell_T: " + trendSell_T.get(symbol) );
-//        System.out.println("-----REC-----\n");
         switch(position) {
             case -1:
                 staggeredQuantity = getSellStaggeredQuantity(symbol, currentQuantity, sellWA);
@@ -134,21 +126,23 @@ public class DecisionMaker {
         if (currentQuantity == 0) {
             return SELL_LIMIT;
         } else {
-            double currentExposure = (currentQuantity * price / SEED_MONEY - team.getCash());
+            double currentExposure = (currentQuantity * price / SEED_MONEY);
             double exposureLimiter = SELL_EXPOSURE_MODIFIER * ( 1 - currentExposure );
             double riskAdversity = SELL_RISK_MODIFIER * ( 1 - percentageChangeSell );
             double probability = ( ( 1 - SELL_EXPOSURE_RISK_RATIO) * (exposureLimiter) ) + ( (SELL_EXPOSURE_RISK_RATIO) * riskAdversity );
             double suggestedSellQuantity = SELL_CURVE.inverseCumulativeProbability(probability);
             List<double[]> history = orderUtil.getInstrumentHistory(symbol);
             double profitableQuantity = 0;
-            for( int i = 0; i < history.size(); i++ ) {
-                double buyPrice = history.get(i)[0];
-                double buyQuantity = history.get(i)[1];
-                if (buyPrice < price || buyPrice <= price * LOSS_TOLERANCE) {
-                    profitableQuantity += buyQuantity;
-                }
-                if (profitableQuantity >= suggestedSellQuantity) {
-                    break;
+            if (history.size() != 0) {
+                for( int i = 0; i < history.size(); i++ ) {
+                    double buyPrice = history.get(i)[0];
+                    double buyQuantity = history.get(i)[1];
+                    if (buyPrice < price || buyPrice <= price * LOSS_TOLERANCE) {
+                        profitableQuantity += buyQuantity;
+                    }
+                    if (profitableQuantity >= suggestedSellQuantity) {
+                        break;
+                    }
                 }
             }
             // TODO remove this before competition
@@ -171,13 +165,7 @@ public class DecisionMaker {
         if (currentQuantity == 0) {
             return BUY_LIMIT;
         } else {
-            double currentExposure = (currentQuantity * price / SEED_MONEY - team.getCash());
-            System.out.println("----CURRENTEXPOSURE----");
-            System.out.println("symbol: " + symbol);
-            System.out.println("currentQuantity: " + currentExposure);
-            System.out.println("price: " + price);
-            System.out.println("team.getCash(): " + team.getCash());
-            System.out.println("----CURRENTEXPOSURE----");
+            double currentExposure = (currentQuantity * price / SEED_MONEY);
             double exposureLimiter = BUY_EXPOSURE_MODIFIER * ( 1 - currentExposure );
             double riskAdversity = BUY_RISK_MODIFIER * ( 1 - percentageChangeBuy );
             double probability = ( ( 1 - BUY_EXPOSURE_RISK_RATIO) * (exposureLimiter) ) + ( (BUY_EXPOSURE_RISK_RATIO) * riskAdversity );
