@@ -1,6 +1,7 @@
 package com.cs.tradingapp;
 
 import net.minidev.json.JSONObject;
+import org.apache.commons.math3.distribution.NormalDistribution;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,11 +14,17 @@ public class DecisionMaker {
     private HashMap<String, Double> estimatedPriceSell_A = new HashMap<>();
     private HashMap<String, Double> trendSell_T = new HashMap<>();
     private static final long startTime = System.currentTimeMillis();
-    private boolean tradeFreeze = false;
+    private boolean tradeFreeze = true;
     private static int period_t = 0;
     private static final long TRADE_FREEZE_DURATION = 300000; // 5 minutes in milliseconds
+    private static final double SEED_MONEY = 1_000_000;
     private static final double AVG_SMOOTHING_CONSTANT = 0.7;
     private static final double TREND_SMOOTHING_CONSTANT = 0.3;
+    private static final double BUY_LIMIT = 1000;
+    private static final double BUY_EXPOSURE_MODIFIER = 1.0; // 0.0 to 1.0
+    private static final double BUY_RISK_MODIFIER = 1.0; // 0.0 to 1.0
+    private static final double BUY_EXPOSURE_RISK_RATIO = 0.5; // favor exposure <=> 0.5 <=> favor risk
+    private static NormalDistribution BUY_CURVE = new NormalDistribution(BUY_LIMIT/2, BUY_LIMIT/3);
     private Team team;
             
     public Runnable getDecision(List<Instrument> instruments) {
@@ -31,7 +38,6 @@ public class DecisionMaker {
             instruments.parallelStream().forEach(instrument -> {
                 tradingActions.add(getAction(instrument));
             });
-            //TODO for each recommendation, fire request! (JSON)
             for(JSONObject jsonParam: tradingActions){
                 if(jsonParam != null){
                     System.out.println("----------------------------------------------");
@@ -74,13 +80,20 @@ public class DecisionMaker {
         updateCalculationVariables(symbol, buyWA, sellWA);
         
         int position = getPosition(symbol); // negative is sell, positive is buy;
+        double currentQuantity = team.getInstrumentQty(symbol);
+        double staggeredQuantity;
         switch(position) {
             case -1:
+                staggeredQuantity = getStaggeredQuantity(symbol, position, currentQuantity, buyWA);
+                if (staggeredQuantity > 0.0) {
+                    result = generateRecommendationResult("buy", buyWA, staggeredQuantity);
+                }
+                break;
             case 1:
-                result = new HashMap<>();
-                result.put("side", position > 0 ? "buy" : "sell");
-                result.put("price", position > 0 ? "" + buyWA : "" + sellWA ); // buy at current price
-                result.put("qty", getStaggeredQuantity(symbol)); // TODO remove magic number!
+                staggeredQuantity = getStaggeredQuantity(symbol, position, currentQuantity, sellWA);
+                if (staggeredQuantity > 0.0) {
+                    result = generateRecommendationResult("sell", sellWA, staggeredQuantity);
+                }
                 break;
             case 0:
                 // hold
@@ -91,16 +104,51 @@ public class DecisionMaker {
         return result;
     }
 
-    private String getStaggeredQuantity(String symbol) {
-        double estimatedPriceBuy = estimatedPriceBuy_A.get(symbol);
-        double trendBuy = trendBuy_T.get(symbol);
-        double estimatedPriceSell = estimatedPriceSell_A.get(symbol);
-        double trendSell = trendSell_T.get(symbol);
+    private HashMap<String, String> generateRecommendationResult(String side, double price, double qty) {
+        HashMap<String, String> result = new HashMap<>();
+        result.put("side", side);
+        result.put("price", "" + price);
+        result.put("qty", "" + qty);
+        return result;
+    }
 
-        double percentageChangeBuy = trendBuy/estimatedPriceBuy;
-        double percentageChangeSell = trendSell/estimatedPriceSell;
+    private double getStaggeredQuantity(String symbol, int position, double currentQuantity, double price) {
+        if (position == 0) return 0.0;
+        else if (position > 0) { // BUYBUYBUY
+            double estimatedPriceBuy = estimatedPriceBuy_A.get(symbol);
+            double trendBuy = trendBuy_T.get(symbol);
+            double percentageChangeBuy = trendBuy / estimatedPriceBuy;
+            if (currentQuantity == 0) {
+                return BUY_LIMIT;
+            } else {
+                double currentExposure = (currentQuantity * price / SEED_MONEY);
+                double exposureLimiter = BUY_EXPOSURE_MODIFIER * ( 1 - currentExposure );
+                double riskAdversity = BUY_RISK_MODIFIER * ( 1 - percentageChangeBuy );
+                double probability = ( ( 1 - BUY_EXPOSURE_RISK_RATIO) * (exposureLimiter) ) + ( (BUY_EXPOSURE_RISK_RATIO) * riskAdversity );
+                double quantity = BUY_CURVE.inverseCumulativeProbability(probability);
+                // TODO remove this before competition
+                // TODO check current cash, can we even buy this amount?
+                System.out.println("-----DECISION MAKER-----");
+                System.out.println("currentExposure " + currentExposure);
+                System.out.println("percentageChangeBuy " + percentageChangeBuy);
+                System.out.println("------------------------");
+                System.out.println("exposureLimiter: " + exposureLimiter);
+                System.out.println("riskAdversity: " + riskAdversity);
+                System.out.println("probability: " + probability);
+                System.out.println("quantity: " + quantity);
+                System.out.println("-----DECISION MAKER-----");
+                return quantity;
+            }
+        } else if (position < 0) { // SELLSELLSELL
+            if ( currentQuantity == 0) return 0.0;
+            else {
+                double estimatedPriceSell = estimatedPriceSell_A.get(symbol);
+                double trendSell = trendSell_T.get(symbol);
+                double percentageChangeSell = trendSell/estimatedPriceSell;
+            }
+        }
         
-        return "100";
+        return 100.0;
     }
 
     private int getPosition(String symbol) {
