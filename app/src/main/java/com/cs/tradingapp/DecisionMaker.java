@@ -16,7 +16,7 @@ public class DecisionMaker {
     private static final long startTime = System.currentTimeMillis();
     private boolean tradeFreeze = true;
     private static int period_t = 0;
-    private static final long TRADE_FREEZE_DURATION = 300000; // 5 minutes in milliseconds
+    private static final long TRADE_FREEZE_DURATION = 60000; // 1 minute in milliseconds
     private static final double SEED_MONEY = 1_000_000;
     private static final double AVG_SMOOTHING_CONSTANT = 0.7;
     private static final double TREND_SMOOTHING_CONSTANT = 0.3;
@@ -91,15 +91,15 @@ public class DecisionMaker {
         double staggeredQuantity;
         switch(position) {
             case -1:
-                staggeredQuantity = getSellStaggeredQuantity(symbol, currentQuantity, sellWA);
+                staggeredQuantity = getSellStaggeredQuantity(symbol, currentQuantity, buyWA);
                 if (staggeredQuantity > 0.0) {
-                    result = generateRecommendationResult("sell", sellWA, staggeredQuantity);
+                    result = generateRecommendationResult("sell", buyWA, staggeredQuantity);
                 }
                 break;
             case 1:
-                staggeredQuantity = getBuyStaggeredQuantity(symbol, currentQuantity, buyWA);
+                staggeredQuantity = getBuyStaggeredQuantity(symbol, currentQuantity, sellWA);
                 if (staggeredQuantity > 0.0) {
-                    result = generateRecommendationResult("buy", buyWA, staggeredQuantity);
+                    result = generateRecommendationResult("buy", sellWA, staggeredQuantity);
                 }
                 break;
             case 0:
@@ -133,7 +133,7 @@ public class DecisionMaker {
             double suggestedSellQuantity = SELL_CURVE.inverseCumulativeProbability(probability);
             List<double[]> history = orderUtil.getInstrumentHistory(symbol);
             double profitableQuantity = 0;
-            if (history.size() != 0) {
+            if (history != null) {
                 for( int i = 0; i < history.size(); i++ ) {
                     double buyPrice = history.get(i)[0];
                     double buyQuantity = history.get(i)[1];

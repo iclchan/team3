@@ -27,8 +27,6 @@ public class TradingApp {
                 orderUtil.checkPendingOrders();
 
                 if (!market.equals(newMarket)) {
-                    System.out.println("Market change detected!");
-                    System.out.println("Running Decision Maker based on new market...");
                     Runnable decision = decisionMaker.getDecision(newMarket.getInstruments());
                     decision.run();
                 }
