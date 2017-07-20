@@ -31,6 +31,7 @@ public class DecisionMaker {
     private static final double SELL_EXPOSURE_RISK_RATIO = 0.5; // favor exposure <=> 0.5 <=> favor risk
     private static NormalDistribution SELL_CURVE = new NormalDistribution(SELL_LIMIT/2, SELL_LIMIT/4);
     private static final double LOSS_TOLERANCE = 0.5; // sells stock when it hits LOSS_TOLERANCE of original buying price
+    private static final double MAX_INSTRUMENT_HOLDINGS = 150_000;
     private Team team;
     private OrderUtil orderUtil;
 
@@ -169,7 +170,7 @@ public class DecisionMaker {
             double exposureLimiter = BUY_EXPOSURE_MODIFIER * ( 1 - currentExposure );
             double riskAdversity = BUY_RISK_MODIFIER * ( 1 - percentageChangeBuy );
             double probability = ( ( 1 - BUY_EXPOSURE_RISK_RATIO) * (exposureLimiter) ) + ( (BUY_EXPOSURE_RISK_RATIO) * riskAdversity );
-            int maxQuantity = (int) (team.getCash() / price);
+            int maxQuantity = (int) Math.min((team.getCash() / price), MAX_INSTRUMENT_HOLDINGS / price);
             // TODO remove this before competition
 //            System.out.println("-----DECISION MAKER-----");
 //            System.out.println("currentExposure " + currentExposure);
