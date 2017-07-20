@@ -63,4 +63,8 @@ public class OrderUtil {
     public HashMap<String, List<double[]>> getHistory() {
         return history;
     }
+
+    public List<double[]> getInstrumentHistory(String symbol) {
+        return history.get(symbol);
+    }
 }
