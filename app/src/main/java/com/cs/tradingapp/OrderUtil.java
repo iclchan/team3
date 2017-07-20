@@ -2,6 +2,7 @@ package com.cs.tradingapp;
 
 import com.jayway.jsonpath.JsonPath;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -12,6 +13,27 @@ public class OrderUtil {
     private static List<Order> pendingOrders = new ArrayList<>();
     private TradingAppUtil tradingAppUtil = new TradingAppUtil();
 
+    public OrderUtil(){
+        Team team = tradingAppUtil.getTeamInfo();
+        String marketData = tradingAppUtil.getMarketData();
+        List<String> instruments = JsonPath.read(marketData, "$..symbol");
+        List<Double> prices = JsonPath.read(marketData, "$..ask");
+        for(int i=0; i<instruments.size(); i++){
+            String symbol = instruments.get(i);
+            double qty = team.getInstrumentQty(symbol);
+            if(qty == 0){
+                history.put(symbol, new ArrayList<>());
+            }else{
+                double price = prices.get(i);
+                history.put(symbol, Arrays.asList(new double[]{price, qty}));
+            }
+            
+            
+            
+            
+        }
+    }
+    
     public void addPendingOrder(String response) {
         if (response != null && !response.isEmpty()) {
             String symbol = JsonPath.read(response, "$.symbol");

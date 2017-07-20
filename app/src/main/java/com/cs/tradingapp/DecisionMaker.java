@@ -14,7 +14,7 @@ public class DecisionMaker {
     private HashMap<String, Double> estimatedPriceSell_A = new HashMap<>();
     private HashMap<String, Double> trendSell_T = new HashMap<>();
     private static final long startTime = System.currentTimeMillis();
-    private boolean tradeFreeze = true;
+    private boolean tradeFreeze = false;
     private static int period_t = 0;
     private static final long TRADE_FREEZE_DURATION = 60000; // 1 minute in milliseconds
     private static final double SEED_MONEY = 1_000_000;
