@@ -101,8 +101,9 @@ public class TradingAppUtil {
         return executeOrder(jsonParam);
     }
 
-    public int checkLimitOrder(String orderId) {
+    public int checkLimitOrder(Order order) {
         String response = "";
+        String orderId = order.getOrderId();
         try {
             URL url = new URL("https://cis2017-exchange.herokuapp.com/api/orders/" + orderId);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -127,13 +128,19 @@ public class TradingAppUtil {
                 } else {
                     String status = JsonPath.read(response, "$.status");
                     String side = JsonPath.read(response, "$.side");
-                    double qty = (int) JsonPath.read(response, "$.qty");
-                    double filledQty = (int) JsonPath.read(response, "$.filled_qty");
-                    if (filledQty == qty) {
+                    
+                    if (status.equals("FILLED")) {
                         System.out.println("Status for " + side + " Order Id " + orderId + " : " + status);
-
                         return 0;
-                    } else if (filledQty == 0) {
+                    } else if (status.equals("NEW")) {
+                        if(side.equals("sell")){
+                            order.updateCycle();
+                            int cycle = order.getCycle();
+                            if(cycle < 2){
+                                return 1;
+                            }
+                        }
+                        
                         cancelLimitOrder(orderId);
                         System.out.println("Status for " + side + " Order Id " + orderId + " : CANCELED");
                         return -1;

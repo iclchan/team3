@@ -1,6 +1,7 @@
 package com.cs.tradingapp;
 
 public class Order {
+    private int cycle;
     private String symbol;
     private String orderId;
     private double qty;
@@ -13,6 +14,15 @@ public class Order {
         this.qty = qty;
         this.filledQty = filledQty;
         this.price = price;
+        this.cycle = 0;
+    }
+
+    public int getCycle() {
+        return cycle;
+    }
+    
+    public void updateCycle(){
+        cycle++;
     }
 
     public String getSymbol() {

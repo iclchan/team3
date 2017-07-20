@@ -33,7 +33,7 @@ public class OrderUtil {
                 String orderId = order.getOrderId();
 
                 int filled = -2;
-                filled = tradingAppUtil.checkLimitOrder(orderId);
+                filled = tradingAppUtil.checkLimitOrder(order);
                 
                 switch (filled) {
                     case -1:
@@ -45,6 +45,7 @@ public class OrderUtil {
                             orderHistory = new ArrayList<double[]>();
                         }
                         orderHistory.add(new double[]{order.getPrice(), order.getQty()});
+                        orderHistory.sort((double[] o1, double[] o2)-> (int) (o2[0] - o1[0]));
                         history.put(orderId, orderHistory);
                         orderIter.remove();
                         break;
