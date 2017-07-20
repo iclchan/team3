@@ -14,7 +14,7 @@ public class DecisionMaker {
     private HashMap<String, Double> estimatedPriceSell_A = new HashMap<>();
     private HashMap<String, Double> trendSell_T = new HashMap<>();
     private static final long startTime = System.currentTimeMillis();
-    private boolean tradeFreeze = true;
+    private boolean tradeFreeze = false;
     private static int period_t = 0;
     private static final long TRADE_FREEZE_DURATION = 300000; // 5 minutes in milliseconds
     private static final double SEED_MONEY = 1_000_000;
@@ -78,7 +78,7 @@ public class DecisionMaker {
         HashMap<String, String> result = null;
         
         updateCalculationVariables(symbol, buyWA, sellWA);
-        
+
         int position = getPosition(symbol); // negative is sell, positive is buy;
         double currentQuantity = team.getInstrumentQty(symbol);
         double staggeredQuantity;
@@ -86,13 +86,21 @@ public class DecisionMaker {
             case -1:
                 staggeredQuantity = getStaggeredQuantity(symbol, position, currentQuantity, buyWA);
                 if (staggeredQuantity > 0.0) {
-                    result = generateRecommendationResult("buy", buyWA, staggeredQuantity);
+                    result = generateRecommendationResult("sell", sellWA, staggeredQuantity);
                 }
                 break;
             case 1:
+                System.out.println("-----REC-----");
+                System.out.println("buyWA: " + buyWA);
+                System.out.println("sellWA: " + sellWA);
+                System.out.println("estimatedPriceBuy_A: " + estimatedPriceBuy_A.get(symbol) );
+                System.out.println("trendBuy_T: " + trendBuy_T.get(symbol) );
+                System.out.println("estimatedPriceSell_A: " + estimatedPriceBuy_A.get(symbol) );
+                System.out.println("trendSell_T: " + trendSell_T.get(symbol) );
+                System.out.println("-----REC-----\n");
                 staggeredQuantity = getStaggeredQuantity(symbol, position, currentQuantity, sellWA);
                 if (staggeredQuantity > 0.0) {
-                    result = generateRecommendationResult("sell", sellWA, staggeredQuantity);
+                    result = generateRecommendationResult("buy", buyWA, staggeredQuantity);
                 }
                 break;
             case 0:
@@ -113,19 +121,20 @@ public class DecisionMaker {
     }
 
     private double getStaggeredQuantity(String symbol, int position, double currentQuantity, double price) {
-        if (position == 0) return 0.0;
+        double quantity = 100.0;
+        if (position == 0) quantity = 0;
         else if (position > 0) { // BUYBUYBUY
             double estimatedPriceBuy = estimatedPriceBuy_A.get(symbol);
             double trendBuy = trendBuy_T.get(symbol);
             double percentageChangeBuy = trendBuy / estimatedPriceBuy;
             if (currentQuantity == 0) {
-                return BUY_LIMIT;
+                quantity = BUY_LIMIT;
             } else {
                 double currentExposure = (currentQuantity * price / SEED_MONEY);
                 double exposureLimiter = BUY_EXPOSURE_MODIFIER * ( 1 - currentExposure );
                 double riskAdversity = BUY_RISK_MODIFIER * ( 1 - percentageChangeBuy );
                 double probability = ( ( 1 - BUY_EXPOSURE_RISK_RATIO) * (exposureLimiter) ) + ( (BUY_EXPOSURE_RISK_RATIO) * riskAdversity );
-                double quantity = BUY_CURVE.inverseCumulativeProbability(probability);
+                quantity = BUY_CURVE.inverseCumulativeProbability(probability);
                 // TODO remove this before competition
                 // TODO check current cash, can we even buy this amount?
                 System.out.println("-----DECISION MAKER-----");
@@ -137,18 +146,16 @@ public class DecisionMaker {
                 System.out.println("probability: " + probability);
                 System.out.println("quantity: " + quantity);
                 System.out.println("-----DECISION MAKER-----");
-                return quantity;
             }
         } else if (position < 0) { // SELLSELLSELL
-            if ( currentQuantity == 0) return 0.0;
+            if ( currentQuantity == 0) quantity = 0.0;
             else {
                 double estimatedPriceSell = estimatedPriceSell_A.get(symbol);
                 double trendSell = trendSell_T.get(symbol);
                 double percentageChangeSell = trendSell/estimatedPriceSell;
             }
         }
-        
-        return 100.0;
+        return quantity;
     }
 
     private int getPosition(String symbol) {
