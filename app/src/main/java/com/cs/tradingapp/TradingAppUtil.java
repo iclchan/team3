@@ -33,7 +33,9 @@ public class TradingAppUtil {
         String teamInfo = "";
         Team team = null;
         try {
-            URL url = new URL("https://cis2017-teamtracker.herokuapp.com/api/teams/tOqZFjL4DLle_Kyaotpttg");
+            //URL url = new URL("https://cis2017-teamtracker.herokuapp.com/api/teams/tOqZFjL4DLle_Kyaotpttg");
+            URL url = new URL("https://cis2017-teamtracker.herokuapp.com/api/teams/Wp7OcKp6D4ph40-PIXtuyQ");
+            
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             conn.setRequestProperty("Accept", "application/json");
@@ -48,23 +50,35 @@ public class TradingAppUtil {
                     teamInfo += teamInfoLine;
                 }
             }
-
+            
             conn.disconnect();
 
             if (!teamInfo.isEmpty()) {
+                
                 String uid = JsonPath.read(teamInfo, "$.uid");
+                
                 double cash = Double.parseDouble(JsonPath.read(teamInfo, "$.cash"));
-                double reservedCash = Double.parseDouble(JsonPath.read(teamInfo, "$.reserved_cash"));
+                
+                double reservedCash = 0.0;
+                try{
+                    reservedCash = Double.parseDouble(JsonPath.read(teamInfo, "$.reserved_cash"));
+                }catch(Exception e){
+                    
+                }
+                
                 List<String> instrumentsList = Arrays.asList("0001", "0005", "0386", "0388", "3988");
+                
                 HashMap<String, Double> instrumentMap = new HashMap<>();
                 for (String instrument : instrumentsList) {
                     double instrumentQty = 0.0;
                     try {
                         instrumentQty = Double.parseDouble(JsonPath.read(teamInfo, "$." + instrument));
                     } catch (Exception e) {
+                        
                     }
                     instrumentMap.put(instrument, instrumentQty);
                 };
+                
 
                 HashMap<String, Double> reservedInstrumentMap = new HashMap<>();
                 for (String instrument : instrumentsList) {
@@ -88,7 +102,8 @@ public class TradingAppUtil {
     public String executeLimitOrder(JSONObject jsonParam) {
         String symbol = (String) jsonParam.get("symbol");
         System.out.println("Executing limit order for " + symbol + "...");
-        jsonParam.put("team_uid", "tOqZFjL4DLle_Kyaotpttg");
+        jsonParam.put("team_uid", "Wp7OcKp6D4ph40-PIXtuyQ");
+        //jsonParam.put("team_uid", "tOqZFjL4DLle_Kyaotpttg");
         jsonParam.put("order_type", "limit");
         return executeOrder(jsonParam);
     }
@@ -96,7 +111,8 @@ public class TradingAppUtil {
     public String executeMarketOrder(JSONObject jsonParam) {
         String symbol = (String) jsonParam.get("symbol");
         System.out.println("Executing market order for " + symbol + "...");
-        jsonParam.put("team_uid", "tOqZFjL4DLle_Kyaotpttg");
+        jsonParam.put("team_uid", "Wp7OcKp6D4ph40-PIXtuyQ");
+        //jsonParam.put("team_uid", "tOqZFjL4DLle_Kyaotpttg");
         jsonParam.put("order_type", "market");
         return executeOrder(jsonParam);
     }

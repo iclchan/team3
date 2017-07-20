@@ -67,8 +67,15 @@ public class OrderUtil {
                         List<double[]> orderHistory = history.get(orderId);
 
                         if (side.equals("sell")) {
-                            orderHistory.remove(0);
-                            history.put(orderId, orderHistory);
+                            if (orderHistory != null) {
+                                try {
+                                    orderHistory.remove(0);
+                                    history.put(orderId, orderHistory);
+                                } catch (Exception e) {
+
+                                }
+                            }
+
                         } else {
                             if (orderHistory == null) {
                                 orderHistory = new ArrayList<double[]>();
