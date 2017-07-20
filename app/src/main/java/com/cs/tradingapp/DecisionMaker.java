@@ -19,16 +19,16 @@ public class DecisionMaker {
     private static final long TRADE_FREEZE_DURATION = 180000; // 1 minute in milliseconds
     private static final double SEED_MONEY = 1_000_000;
     private static final double AVG_SMOOTHING_CONSTANT = 0.7;
-    private static final double TREND_SMOOTHING_CONSTANT = 0.3;
+    private static final double TREND_SMOOTHING_CONSTANT = 0.5;
     private static final double BUY_LIMIT = 1000;
-    private static final double BUY_EXPOSURE_MODIFIER = 0.7; // 0.0 to 1.0
-    private static final double BUY_RISK_MODIFIER = 0.7; // 0.0 to 1.0
-    private static final double BUY_EXPOSURE_RISK_RATIO = 0.5; // favor exposure <=> 0.5 <=> favor risk
+    private static final double BUY_EXPOSURE_MODIFIER = 0.6; // 0.0 to 1.0
+    private static final double BUY_RISK_MODIFIER = 0.9; // 0.0 to 1.0
+    private static final double BUY_EXPOSURE_RISK_RATIO = 0.8; // favor exposure <=> 0.5 <=> favor risk
     private static NormalDistribution BUY_CURVE = new NormalDistribution(BUY_LIMIT/2, BUY_LIMIT/4);
     private static final double SELL_LIMIT = 1000;
-    private static final double SELL_EXPOSURE_MODIFIER = 0.7; // 0.0 to 1.0
-    private static final double SELL_RISK_MODIFIER = 0.7; // 0.0 to 1.0
-    private static final double SELL_EXPOSURE_RISK_RATIO = 0.5; // favor exposure <=> 0.5 <=> favor risk
+    private static final double SELL_EXPOSURE_MODIFIER = 1.0; // 0.0 to 1.0
+    private static final double SELL_RISK_MODIFIER = 1.0; // 0.0 to 1.0
+    private static final double SELL_EXPOSURE_RISK_RATIO = 0.8; // favor exposure <=> 0.5 <=> favor risk
     private static NormalDistribution SELL_CURVE = new NormalDistribution(SELL_LIMIT/2, SELL_LIMIT/4);
     private static final double LOSS_TOLERANCE = 0.5; // sells stock when it hits LOSS_TOLERANCE of original buying price
     private static final double MAX_INSTRUMENT_HOLDINGS = 150_000;
