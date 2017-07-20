@@ -33,7 +33,6 @@ public class OrderUtil {
                 String orderId = order.getOrderId();
 
                 int filled = -2;
-                System.out.println(orderId);
                 filled = tradingAppUtil.checkLimitOrder(orderId);
                 
                 switch (filled) {

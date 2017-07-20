@@ -81,7 +81,7 @@ public class TradingAppUtil {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
+
         return team;
     }
 
@@ -111,32 +111,36 @@ public class TradingAppUtil {
 
             if (conn.getResponseCode() != 200) {
                 System.out.println("Checking failed for Order Id " + orderId + ": HTTP error code : " + conn.getResponseCode());
-            } else {
-                BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-                String responseLine;
-                while ((responseLine = br.readLine()) != null) {
-                    response += responseLine;
-                }
+            }
+
+            BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+            String responseLine;
+            while ((responseLine = br.readLine()) != null) {
+                response += responseLine;
             }
 
             conn.disconnect();
 
             if (!response.isEmpty()) {
-                String status = JsonPath.read(response, "$.status");
-                String side = JsonPath.read(response, "$.side");
-                double qty = (int) JsonPath.read(response, "$.qty");
-                double filledQty = (int) JsonPath.read(response, "$.filled_qty");
-                if (filledQty == qty) {
-                    System.out.println("Status for " + side + " Order Id " + orderId + " : " + status);
-
-                    return 0;
-                } else if (filledQty == 0) {
-                    cancelLimitOrder(orderId);
-                    System.out.println("Status for " + side + " Order Id " + orderId + " : CANCELED");
+                if (response.equals("null")) {
                     return -1;
                 } else {
-                    System.out.println("Status for " + side + " Order Id " + orderId + " : " + status);
-                    return 1;
+                    String status = JsonPath.read(response, "$.status");
+                    String side = JsonPath.read(response, "$.side");
+                    double qty = (int) JsonPath.read(response, "$.qty");
+                    double filledQty = (int) JsonPath.read(response, "$.filled_qty");
+                    if (filledQty == qty) {
+                        System.out.println("Status for " + side + " Order Id " + orderId + " : " + status);
+
+                        return 0;
+                    } else if (filledQty == 0) {
+                        cancelLimitOrder(orderId);
+                        System.out.println("Status for " + side + " Order Id " + orderId + " : CANCELED");
+                        return -1;
+                    } else {
+                        System.out.println("Status for " + side + " Order Id " + orderId + " : " + status);
+                        return 1;
+                    }
                 }
             }
         } catch (Exception e) {
@@ -246,10 +250,10 @@ public class TradingAppUtil {
             BufferedReader br;
             try {
                 br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-            } catch (Exception e){
+            } catch (Exception e) {
                 br = new BufferedReader(new InputStreamReader((conn.getErrorStream())));
             }
-            
+
             String responseLine;
             while ((responseLine = br.readLine()) != null) {
                 response += responseLine;
