@@ -4,6 +4,7 @@ import net.minidev.json.JSONObject;
 import org.apache.commons.math3.distribution.NormalDistribution;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -14,24 +15,24 @@ public class DecisionMaker {
     private HashMap<String, Double> estimatedPriceSell_A = new HashMap<>();
     private HashMap<String, Double> trendSell_T = new HashMap<>();
     private static final long startTime = System.currentTimeMillis();
-    private boolean tradeFreeze = false;
+    private boolean tradeFreeze = true;
     private static int period_t = 0;
     private static final long TRADE_FREEZE_DURATION = 180000; // 3 minute in milliseconds
     private static final double SEED_MONEY = 1_000_000;
     private static final double AVG_SMOOTHING_CONSTANT = 0.7;
-    private static final double TREND_SMOOTHING_CONSTANT = 0.5;
+    private static final double TREND_SMOOTHING_CONSTANT = 0.3;
     private static final double BUY_LIMIT = 1000;
-    private static final double BUY_EXPOSURE_MODIFIER = 0.6; // 0.0 to 1.0
-    private static final double BUY_RISK_MODIFIER = 0.9; // 0.0 to 1.0
-    private static final double BUY_EXPOSURE_RISK_RATIO = 0.8; // favor exposure <=> 0.5 <=> favor risk
+    private static final double BUY_EXPOSURE_MODIFIER = 0.7; // 0.0 to 1.0
+    private static final double BUY_RISK_MODIFIER = 0.7; // 0.0 to 1.0
+    private static final double BUY_EXPOSURE_RISK_RATIO = 0.5; // favor exposure <=> 0.5 <=> favor risk
     private static NormalDistribution BUY_CURVE = new NormalDistribution(BUY_LIMIT/2, BUY_LIMIT/4);
-    private static final double SELL_LIMIT = 1000;
-    private static final double SELL_EXPOSURE_MODIFIER = 1.0; // 0.0 to 1.0
-    private static final double SELL_RISK_MODIFIER = 1.0; // 0.0 to 1.0
-    private static final double SELL_EXPOSURE_RISK_RATIO = 0.8; // favor exposure <=> 0.5 <=> favor risk
+    private static final double SELL_EXPOSURE_MODIFIER = 0.7; // 0.0 to 1.0
+    private static final double SELL_RISK_MODIFIER = 0.7; // 0.0 to 1.0
+    private static final double SELL_EXPOSURE_RISK_RATIO = 0.5; // favor exposure <=> 0.5 <=> favor risk
 //    private static NormalDistribution SELL_CURVE = new NormalDistribution(SELL_LIMIT/2, SELL_LIMIT/4);
-    private static final double LOSS_TOLERANCE = 0.5; // sells stock when it hits LOSS_TOLERANCE of original buying price
+    private static final double LOSS_TOLERANCE = 0.60; // sells stock when it hits LOSS_TOLERANCE of original buying price
     private static final double MAX_INSTRUMENT_HOLDINGS = 150_000;
+    private static final double CASH_OUT_RATIO = 1.2;
     private Team team;
     private OrderUtil orderUtil;
 
@@ -59,6 +60,9 @@ public class DecisionMaker {
     }
 
     private void updateTradeFreeze(long currentTime) {
+//        System.out.println(startTime);
+//        System.out.println(currentTime);
+//        System.out.println(startTime + TRADE_FREEZE_DURATION - currentTime);
         tradeFreeze = ( startTime + TRADE_FREEZE_DURATION ) >= currentTime;
     }
 
@@ -87,7 +91,7 @@ public class DecisionMaker {
         
         updateCalculationVariables(symbol, buyWA, sellWA);
 
-        int position = getPosition(symbol); // negative is sell, positive is buy;
+        int position = getPosition(symbol, buyWA); // negative is sell, positive is buy;
         double currentQuantity = team.getInstrumentQty(symbol);
         double staggeredQuantity;
         switch(position) {
@@ -101,6 +105,12 @@ public class DecisionMaker {
                 staggeredQuantity = getBuyStaggeredQuantity(symbol, currentQuantity, sellWA);
                 if (staggeredQuantity > 0.0) {
                     result = generateRecommendationResult("buy", sellWA, staggeredQuantity);
+                }
+                break;
+            case 100:
+                staggeredQuantity = getCashOutQuantity(symbol, currentQuantity, buyWA);
+                if (staggeredQuantity > 0.0) {
+                    result = generateRecommendationResult("sell", buyWA, staggeredQuantity);
                 }
                 break;
             case 0:
@@ -156,12 +166,26 @@ public class DecisionMaker {
         return Math.min(profitableQuantity, suggestedSellQuantity);
     }
 
+    private double getCashOutQuantity(String symbol, double currentQuantity, double price) {
+        List<double[]> history = orderUtil.getInstrumentHistory(symbol);
+        Collections.reverse(history);
+        double profitableQuantity = 0;
+        for( int i = 0; i < history.size(); i++ ) {
+            if ( ( price / history.get(i)[0] ) >= CASH_OUT_RATIO )  {
+                profitableQuantity += history.get(i)[1];
+            } else {
+                break;
+            }
+        }
+        return profitableQuantity;
+    }
+
     private double getBuyStaggeredQuantity(String symbol, double currentQuantity, double price) {
         double estimatedPriceBuy = estimatedPriceBuy_A.get(symbol);
         double trendBuy = trendBuy_T.get(symbol);
         double percentageChangeBuy = ( trendBuy * 100 / estimatedPriceBuy );
         if (currentQuantity == 0) {
-            return BUY_LIMIT;
+            return (MAX_INSTRUMENT_HOLDINGS / price) / 10;
         } else {
             double currentExposure = (currentQuantity * price / MAX_INSTRUMENT_HOLDINGS);
             double exposureLimiter = BUY_EXPOSURE_MODIFIER * ( 1 - currentExposure );
@@ -181,10 +205,16 @@ public class DecisionMaker {
         }
     }
 
-    private int getPosition(String symbol) {
+    private int getPosition(String symbol, double buyWA) {
         int buyPosition = (int) Math.signum(trendBuy_T.get(symbol));
         int sellPosition = (int) Math.signum(trendSell_T.get(symbol));
+
+        List<double[]> history = orderUtil.getInstrumentHistory(symbol);
         if (buyPosition > 0 && sellPosition > 0) {
+            if ( history.size() >= 1 && ( buyWA / history.get(history.size() - 1)[0] ) >= CASH_OUT_RATIO ) {
+                System.out.println("CASHING OUT");
+                return 100;
+            }
             return 1;
         } else if (buyPosition < 0 && sellPosition < 0 && team.getInstrumentQty(symbol) > 0) {
             return -1;

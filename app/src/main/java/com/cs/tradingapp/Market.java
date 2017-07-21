@@ -27,7 +27,8 @@ public class Market {
             Instrument instrument = entry.getValue();
             
             Instrument anotherInstrument = another.getInstrument(symbol);
-            if(instrument.getBuyWA() != anotherInstrument.getBuyWA() || instrument.getSellWA() != anotherInstrument.getSellWA()){
+            if ( anotherInstrument == null ) equals[0] = false;
+            else if(instrument.getBuyWA() != anotherInstrument.getBuyWA() || instrument.getSellWA() != anotherInstrument.getSellWA()){
                 equals[0] = false;
             }
         });
