@@ -23,6 +23,7 @@ public class TradingApp {
             if (market == null) {
                 market = TradingAppUtil.getInstrumentData();
             } else {
+                //System.out.println("Market change detected!");
                 Market newMarket = TradingAppUtil.getInstrumentData();
                 orderUtil.checkPendingOrders();
 

@@ -14,7 +14,7 @@ import net.minidev.json.JSONObject;
 
 public class TradingAppUtil {
 
-    private static final String teamUid = "VAqC3uH3ZuujmrlNeRFLCQ";
+    private static final String teamUid = "tOqZFjL4DLle_Kyaotpttg";
 
     public static Market getInstrumentData() {
 //        String marketData = getMarketData();
